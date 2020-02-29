@@ -1,5 +1,7 @@
 <?php
 
-$CACHE_DIR = "videocache/";
+define("DBASEFILE", "videocache.sqlite");
+
+$CACHE_DIR = "videocache";
 
 ?>
