@@ -2,7 +2,7 @@
 
 define("DBASEFILE", "/var/lib/antimozg/videocache.sqlite");
 
-$SERVER_URL = "https://video.vtomske.net";
+$SERVER_URL = "https://cache.server.com";
 
 $CACHE_DIR = "videocache";
 
