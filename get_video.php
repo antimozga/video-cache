@@ -58,7 +58,7 @@ function get_source($hash, $type)
 	return '<source src="https://video.vtomske.net/'.$CACHE_DIR.'/'.$hash.'.mp4" type="'.$type.'">';
     }
 
-    return NULL;
+    return '<source src="https://video.vtomske.net/novideo.mp4" type="video/mp4">';
 }
 
 $database = new PDO('sqlite:'.DBASEFILE);
@@ -72,7 +72,14 @@ $query = "CREATE TABLE IF NOT EXISTS VideoCache " .
 	 "(id INTEGER PRIMARY KEY, hash NVARCHAR, type NVARCHAR, last_time INTEGER, time INTEGER);";
 $database->exec($query);
 
-$link = 'https://vk.com/video-60130670_456254951';
+if (!isset($_REQUEST['url'])) {
+    echo '<source src="https://video.vtomske.net/novideo.mp4" type="video/mp4">';
+    exit;
+}
+
+$link = addslashes($_REQUEST['url']);
+
+//$link = 'https://vk.com/video-60130670_456254951';
 
 $hash = md5($link);
 
@@ -97,7 +104,10 @@ $url = str_replace('https://vk.com', 'https://m.vk.com', $link);
 
 $text = file_get_contents($url);
 
-//echo $text;
+if ($text == "") {
+    echo '<source src="https://video.vtomske.net/novideo.mp4" type="video/mp4">';
+    exit;
+}
 
 $dom = new DomDocument();
 $dom->loadHTML($text);
@@ -109,13 +119,16 @@ if (!is_null($elements)) {
 	foreach ($nodes as $node) {
 	    if ($node->nodeName == "source") {
 		if ($node->getAttribute('type') == "video/mp4") {
-//		    echo $node->getAttribute('src');
 		    $vsrc = $node->getAttribute('src');
-		    system('wget -q "'.$vsrc.'" -O '.$CACHE_DIR.'/'.$hash.'.mp4');
-		    $time = time();
-		    $type = $node->getAttribute('type');
-		    $database->exec("INSERT INTO VideoCache (hash, type, last_time, time) VALUES('$hash', '$type', '$time', '$time')");
-		    echo get_source($hash, $type);
+		    system('wget -q"'.$vsrc.'" -O '.$CACHE_DIR.'/'.$hash.'.mp4', $retval);
+		    if ($retval == 0) {
+			$time = time();
+			$type = $node->getAttribute('type');
+			$database->exec("INSERT INTO VideoCache (hash, type, last_time, time) VALUES('$hash', '$type', '$time', '$time')");
+			echo get_source($hash, $type);
+		    } else {
+			echo '<source src="https://video.vtomske.net/novideo.mp4" type="video/mp4">';
+		    }
 		}
 	    }
 	}
