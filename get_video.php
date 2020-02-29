@@ -53,12 +53,13 @@ include_once('config.php');
 function get_source($hash, $type)
 {
     global $CACHE_DIR;
+    global $SERVER_URL;
 
     if ($type == "video/mp4") {
-	return '<source src="https://video.vtomske.net/'.$CACHE_DIR.'/'.$hash.'.mp4" type="'.$type.'">';
+	return '<source src="'.$SERVER_URL.'/'.$CACHE_DIR.'/'.$hash.'.mp4" type="'.$type.'">';
     }
 
-    return '<source src="https://video.vtomske.net/novideo.mp4" type="video/mp4">';
+    return '<source src="'.$SERVER_URL.'/novideo.mp4" type="video/mp4">';
 }
 
 $database = new PDO('sqlite:'.DBASEFILE);
@@ -73,7 +74,7 @@ $query = "CREATE TABLE IF NOT EXISTS VideoCache " .
 $database->exec($query);
 
 if (!isset($_REQUEST['url'])) {
-    echo '<source src="https://video.vtomske.net/novideo.mp4" type="video/mp4">';
+    echo '<source src="'.$SERVER_URL.'/novideo.mp4" type="video/mp4">';
     exit;
 }
 
@@ -98,41 +99,49 @@ foreach($infos as $info) {
     }
 }
 
-$url = str_replace('https://vk.com', 'https://m.vk.com', $link);
+define (VK_PREFIX, "https://vk.com/video");
+define (VK_PREFIX, "https://m.vk.com/video");
 
-//printf("%s\n", $url);
+if (substr($link, 0, strlen(VK_PREFIX)) == VK_PREFIX ||
+    substr($link, 0, strlen(VK1_PREFIX)) == VK1_PREFIX) {
+    $url = str_replace('https://vk.com', 'https://m.vk.com', $link);
 
-$text = file_get_contents($url);
+    //printf("%s\n", $url);
 
-if ($text == "") {
-    echo '<source src="https://video.vtomske.net/novideo.mp4" type="video/mp4">';
-    exit;
-}
+    $text = file_get_contents($url);
 
-$dom = new DomDocument();
-$dom->loadHTML($text);
-$elements = $dom->getElementsByTagName('video');
+    if ($text == "") {
+	echo '<source src="'.$SERVER_URL.'/novideo.mp4" type="video/mp4">';
+	exit;
+    }
 
-if (!is_null($elements)) {
-    foreach ($elements as $element) {
-	$nodes = $element->childNodes;
-	foreach ($nodes as $node) {
-	    if ($node->nodeName == "source") {
-		if ($node->getAttribute('type') == "video/mp4") {
-		    $vsrc = $node->getAttribute('src');
-		    system('wget -q "'.$vsrc.'" -O '.$CACHE_DIR.'/'.$hash.'.mp4', $retval);
-		    if ($retval == 0) {
-			$time = time();
-			$type = $node->getAttribute('type');
-			$database->exec("INSERT INTO VideoCache (hash, type, last_time, time) VALUES('$hash', '$type', '$time', '$time')");
-			echo get_source($hash, $type);
-		    } else {
-			echo '<source src="https://video.vtomske.net/novideo.mp4" type="video/mp4">';
+    $dom = new DomDocument();
+    $dom->loadHTML($text);
+    $elements = $dom->getElementsByTagName('video');
+
+    if (!is_null($elements)) {
+	foreach ($elements as $element) {
+	    $nodes = $element->childNodes;
+	    foreach ($nodes as $node) {
+		if ($node->nodeName == "source") {
+		    if ($node->getAttribute('type') == "video/mp4") {
+			$vsrc = $node->getAttribute('src');
+			system('wget -q "'.$vsrc.'" -O '.$CACHE_DIR.'/'.$hash.'.mp4', $retval);
+			if ($retval == 0) {
+			    $time = time();
+			    $type = $node->getAttribute('type');
+			    $database->exec("INSERT INTO VideoCache (hash, type, last_time, time) VALUES('$hash', '$type', '$time', '$time')");
+			    echo get_source($hash, $type);
+			} else {
+			    echo '<source src="'.$SERVER_URL.'/novideo.mp4" type="video/mp4">';
+			}
 		    }
 		}
 	    }
 	}
     }
+} else {
+    echo '<source src="'.$SERVER_URL.'/novideo.mp4" type="video/mp4">';
 }
 
 ?>
