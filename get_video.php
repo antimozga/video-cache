@@ -72,7 +72,7 @@ function get_source($hash, $type, $width, $height)
 //	echo '<video class="videocache" '.$size.' poster="'.$SERVER_URL.'/testcard.png" controls><source src="'.$SERVER_URL.'/'.$CACHE_DIR.'/'.$hash.'.mp4" type="'.$type.'"></video>';
 	echo '<video class="videocache" '.$size.' title="'.$link.'" controls><source src="'.$SERVER_URL.'/'.$CACHE_DIR.'/'.$hash.'.mp4" type="'.$type.'"></video>';
     } else {
-	echo '<video class="videocache" '.$size.' controls><source src="'.$SERVER_URL.'/novideo.mp4" type="video/mp4"></video>';
+	echo '<video class="videocache" '.$size.' title="'.$link.'" controls><source src="'.$SERVER_URL.'/novideo.mp4" type="video/mp4"></video>';
     }
 
     echo '</body></html>';
@@ -95,7 +95,7 @@ function show_error($width, $height)
 
     echo '<html><body style="margin: 0; border: 0">';
 
-    echo '<video class="videocache" '.$size.' controls><source src="'.$SERVER_URL.'/novideo.mp4" type="video/mp4"></video>';
+    echo '<video class="videocache" '.$size.' title="'.$link.'" controls><source src="'.$SERVER_URL.'/novideo.mp4" type="video/mp4"></video>';
 
     echo '</body></html>';
 }
