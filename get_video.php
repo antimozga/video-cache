@@ -37,7 +37,7 @@ if ($time_diff < 1) {
 	$_SESSION['ajsner']++;
     }
 
-    if ($_SESSION['ajsner'] > 1) {
+    if ($_SESSION['ajsner'] > 35) {
 	header($_SERVER["SERVER_PROTOCOL"]." 503 Service Temporarily Unavailable", true, 503);
 	$retryAfterSeconds = 240;
 	header('Retry-After: ' . $retryAfterSeconds);
