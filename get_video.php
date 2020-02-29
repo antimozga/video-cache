@@ -50,16 +50,54 @@ if ($time_diff < 1) {
 
 include_once('config.php');
 
-function get_source($hash, $type)
+function get_source($hash, $type, $width, $height)
 {
     global $CACHE_DIR;
     global $SERVER_URL;
+    global $link;
 
-    if ($type == "video/mp4") {
-	return '<source src="'.$SERVER_URL.'/'.$CACHE_DIR.'/'.$hash.'.mp4" type="'.$type.'">';
+    $size = "";
+
+    if ($width > 0) {
+	$size = "width=\"$width\"";
     }
 
-    return '<source src="'.$SERVER_URL.'/novideo.mp4" type="video/mp4">';
+    if ($height > 0) {
+	$size = "$size height=\"$height\"";
+    }
+
+    echo '<html><body style="margin: 0; border: 0">';
+
+    if ($type == "video/mp4") {
+//	echo '<video class="videocache" '.$size.' poster="'.$SERVER_URL.'/testcard.png" controls><source src="'.$SERVER_URL.'/'.$CACHE_DIR.'/'.$hash.'.mp4" type="'.$type.'"></video>';
+	echo '<video class="videocache" '.$size.' title="'.$link.'" controls><source src="'.$SERVER_URL.'/'.$CACHE_DIR.'/'.$hash.'.mp4" type="'.$type.'"></video>';
+    } else {
+	echo '<video class="videocache" '.$size.' controls><source src="'.$SERVER_URL.'/novideo.mp4" type="video/mp4"></video>';
+    }
+
+    echo '</body></html>';
+}
+
+function show_error($width, $height)
+{
+    global $SERVER_URL;
+    global $link;
+
+    $size = "";
+
+    if ($width > 0) {
+	$size = "width=\"$width\"";
+    }
+
+    if ($height > 0) {
+	$size = "$size height=\"$height\"";
+    }
+
+    echo '<html><body style="margin: 0; border: 0">';
+
+    echo '<video class="videocache" '.$size.' controls><source src="'.$SERVER_URL.'/novideo.mp4" type="video/mp4"></video>';
+
+    echo '</body></html>';
 }
 
 $database = new PDO('sqlite:'.DBASEFILE);
@@ -73,9 +111,22 @@ $query = "CREATE TABLE IF NOT EXISTS VideoCache " .
 	 "(id INTEGER PRIMARY KEY, hash NVARCHAR, type NVARCHAR, last_time INTEGER, time INTEGER);";
 $database->exec($query);
 
+$video_width  = 0;
+$video_height = 0;
+
 if (!isset($_REQUEST['url'])) {
-    echo '<source src="'.$SERVER_URL.'/novideo.mp4" type="video/mp4">';
+    show_error($video_width, $video_height);
     exit;
+}
+
+if (isset($_REQUEST['w'])) {
+    $video_width = $_REQUEST['w'];
+    $video_width = ($video_width * 10) / 10;
+}
+
+if (isset($_REQUEST['h'])) {
+    $video_height = $_REQUEST['h'];
+    $video_height = ($video_height * 10) / 10;
 }
 
 $link = addslashes($_REQUEST['url']);
@@ -94,7 +145,7 @@ foreach($infos as $info) {
 	$time = time();
 	$database->exec("UPDATE VideoCache SET last_time = $time WHERE hash = \"$hash\"");
 
-	echo get_source($path, $type);
+	get_source($path, $type, $video_width, $video_height);
 	exit;
     }
 }
@@ -111,7 +162,7 @@ if (substr($link, 0, strlen(VK_PREFIX)) == VK_PREFIX ||
     $text = file_get_contents($url);
 
     if ($text == "") {
-	echo '<source src="'.$SERVER_URL.'/novideo.mp4" type="video/mp4">';
+	show_error($video_width, $video_height);
 	exit;
     }
 
@@ -131,9 +182,9 @@ if (substr($link, 0, strlen(VK_PREFIX)) == VK_PREFIX ||
 			    $time = time();
 			    $type = $node->getAttribute('type');
 			    $database->exec("INSERT INTO VideoCache (hash, type, last_time, time) VALUES('$hash', '$type', '$time', '$time')");
-			    echo get_source($hash, $type);
+			    get_source($hash, $type);
 			} else {
-			    echo '<source src="'.$SERVER_URL.'/novideo.mp4" type="video/mp4">';
+			    show_error($video_width, $video_height);
 			}
 		    }
 		}
@@ -141,7 +192,7 @@ if (substr($link, 0, strlen(VK_PREFIX)) == VK_PREFIX ||
 	}
     }
 } else {
-    echo '<source src="'.$SERVER_URL.'/novideo.mp4" type="video/mp4">';
+    show_error($video_width, $video_height);
 }
 
 ?>
