@@ -151,11 +151,18 @@ foreach($infos as $info) {
 }
 
 define (VK_PREFIX, "https://vk.com/video");
-define (VK_PREFIX, "https://m.vk.com/video");
+define (VK1_PREFIX, "https://m.vk.com/video");
+define (VK2_PREFIX, "https://vk.com/feed?z=video");
 
-if (substr($link, 0, strlen(VK_PREFIX)) == VK_PREFIX ||
-    substr($link, 0, strlen(VK1_PREFIX)) == VK1_PREFIX) {
-    $url = str_replace('https://vk.com', 'https://m.vk.com', $link);
+if (substr($link, 0, strlen(VK_PREFIX))  == VK_PREFIX  ||
+    substr($link, 0, strlen(VK1_PREFIX)) == VK1_PREFIX ||
+    substr($link, 0, strlen(VK2_PREFIX)) == VK2_PREFIX) {
+
+    if (substr($link, 0, strlen(VK_PREFIX)) == VK_PREFIX) {
+	$url = str_replace('https://vk.com', 'https://m.vk.com', $link);
+    } else if (substr($link, 0, strlen(VK2_PREFIX)) == VK2_PREFIX) {
+	$url = str_replace('https://vk.com/feed?z=video', 'https://m.vk.com/video', $link);
+    }
 
     //printf("%s\n", $url);
 
@@ -182,7 +189,7 @@ if (substr($link, 0, strlen(VK_PREFIX)) == VK_PREFIX ||
 			    $time = time();
 			    $type = $node->getAttribute('type');
 			    $database->exec("INSERT INTO VideoCache (hash, type, last_time, time) VALUES('$hash', '$type', '$time', '$time')");
-			    get_source($hash, $type);
+			    get_source($hash, $type, $video_width, $video_height);
 			} else {
 			    show_error($video_width, $video_height);
 			}
