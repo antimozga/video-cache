@@ -1,6 +1,6 @@
 <?php
 
-define("DBASEFILE", "videocache.sqlite");
+define("DBASEFILE", "/var/lib/antimozg/videocache.sqlite");
 
 $CACHE_DIR = "videocache";
 
