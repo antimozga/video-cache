@@ -100,6 +100,21 @@ function show_error($width, $height)
     echo '</body></html>';
 }
 
+function download_video($vsrc, $hash, $type, $time, $width, $height)
+{
+    global $database;
+    global $CACHE_DIR;
+
+    $database->exec("INSERT INTO VideoCache (hash, type, last_time, time) VALUES('$hash', '$type', '$time', '$time')");
+    system('wget -q "'.$vsrc.'" -O '.$CACHE_DIR.'/'.$hash.'.mp4', $retval);
+    if ($retval == 0) {
+	get_source($hash, $type, $width, $height);
+    } else {
+	$database->exec("DELETE FROM VideoCache WHERE hash = \"$hash\"");
+	show_error($width, $height);
+    }
+}
+
 $database = new PDO('sqlite:'.DBASEFILE);
 
 if (!$database) {
@@ -132,6 +147,7 @@ if (isset($_REQUEST['h'])) {
 $link = addslashes($_REQUEST['url']);
 
 //$link = 'https://vk.com/video-60130670_456254951';
+//$link = 'https://www.tiktok.com/@kimtaerini/video/6796843229443542273';
 
 $hash = md5($link);
 
@@ -150,9 +166,11 @@ foreach($infos as $info) {
     }
 }
 
-define (VK_PREFIX, "https://vk.com/video");
-define (VK1_PREFIX, "https://m.vk.com/video");
-define (VK2_PREFIX, "https://vk.com/feed?z=video");
+define ('VK_PREFIX',  'https://vk.com/video');
+define ('VK1_PREFIX', 'https://m.vk.com/video');
+define ('VK2_PREFIX', 'https://vk.com/feed?z=video');
+
+define ('TIKTOK_PREFIX', 'https://www.tiktok.com/');
 
 if (substr($link, 0, strlen(VK_PREFIX))  == VK_PREFIX  ||
     substr($link, 0, strlen(VK1_PREFIX)) == VK1_PREFIX ||
@@ -164,9 +182,9 @@ if (substr($link, 0, strlen(VK_PREFIX))  == VK_PREFIX  ||
 	$url = str_replace('https://vk.com/feed?z=video', 'https://m.vk.com/video', $link);
     }
 
-    //printf("%s\n", $url);
-
-    $text = file_get_contents($url);
+    $options  = array('http' => array('user_agent' => "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/70.0.3538.77 Safari/537.36\r\n"));
+    $context  = stream_context_create($options);
+    $text = file_get_contents($url, false, $context);
 
     if ($text == "") {
 	show_error($video_width, $video_height);
@@ -186,19 +204,42 @@ if (substr($link, 0, strlen(VK_PREFIX))  == VK_PREFIX  ||
 			$vsrc = $node->getAttribute('src');
 			$time = time();
 			$type = $node->getAttribute('type');
-			$database->exec("INSERT INTO VideoCache (hash, type, last_time, time) VALUES('$hash', '$type', '$time', '$time')");
-			system('wget -q "'.$vsrc.'" -O '.$CACHE_DIR.'/'.$hash.'.mp4', $retval);
-			if ($retval == 0) {
-			    get_source($hash, $type, $video_width, $video_height);
-			} else {
-			    $database->exec("DELETE FROM VideoCache WHERE hash = \"$hash\"");
-			    show_error($video_width, $video_height);
-			}
+
+			download_video($vsrc, $hash, $type, $time, $video_width, $video_height);
+			break;
 		    }
 		}
 	    }
 	}
     }
+} else if (substr($link, 0, strlen(TIKTOK_PREFIX))  == TIKTOK_PREFIX) {
+    $options  = array('http' => array('user_agent' => "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/70.0.3538.77 Safari/537.36\r\n"));
+    $context  = stream_context_create($options);
+    $text = file_get_contents($link, false, $context);
+
+    if ($text == "") {
+	show_error($video_width, $video_height);
+	exit;
+    }
+
+    $dom = new DomDocument();
+    $dom->loadHTML($text);
+    $elements = $dom->getElementsByTagName('video');
+
+    if (!is_null($elements)) {
+	foreach ($elements as $element) {
+	    $vsrc = $element->getAttribute('src');
+	    if ($vsrc != "") {
+		$time = time();
+		$type = 'video/mp4';
+
+		download_video($vsrc, $hash, $type, $time, $video_width, $video_height);
+		exit;
+	    }
+	}
+    }
+
+    show_error($video_width, $video_height);
 } else {
     show_error($video_width, $video_height);
 }
