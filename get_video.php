@@ -184,13 +184,14 @@ if (substr($link, 0, strlen(VK_PREFIX))  == VK_PREFIX  ||
 		if ($node->nodeName == "source") {
 		    if ($node->getAttribute('type') == "video/mp4") {
 			$vsrc = $node->getAttribute('src');
+			$time = time();
+			$type = $node->getAttribute('type');
+			$database->exec("INSERT INTO VideoCache (hash, type, last_time, time) VALUES('$hash', '$type', '$time', '$time')");
 			system('wget -q "'.$vsrc.'" -O '.$CACHE_DIR.'/'.$hash.'.mp4', $retval);
 			if ($retval == 0) {
-			    $time = time();
-			    $type = $node->getAttribute('type');
-			    $database->exec("INSERT INTO VideoCache (hash, type, last_time, time) VALUES('$hash', '$type', '$time', '$time')");
 			    get_source($hash, $type, $video_width, $video_height);
 			} else {
+			    $database->exec("DELETE FROM VideoCache WHERE hash = \"$hash\"");
 			    show_error($video_width, $video_height);
 			}
 		    }
