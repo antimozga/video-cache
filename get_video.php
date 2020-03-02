@@ -171,6 +171,7 @@ define ('VK1_PREFIX', 'https://m.vk.com/video');
 define ('VK2_PREFIX', 'https://vk.com/feed?z=video');
 
 define ('TIKTOK_PREFIX', 'https://www.tiktok.com/');
+define ('TIKTOK1_PREFIX', 'https://vm.tiktok.com/');
 
 if (substr($link, 0, strlen(VK_PREFIX))  == VK_PREFIX  ||
     substr($link, 0, strlen(VK1_PREFIX)) == VK1_PREFIX ||
@@ -212,7 +213,40 @@ if (substr($link, 0, strlen(VK_PREFIX))  == VK_PREFIX  ||
 	    }
 	}
     }
-} else if (substr($link, 0, strlen(TIKTOK_PREFIX))  == TIKTOK_PREFIX) {
+} else if (substr($link, 0, strlen(TIKTOK_PREFIX))  == TIKTOK_PREFIX ||
+	   substr($link, 0, strlen(TIKTOK1_PREFIX)) == TIKTOK1_PREFIX) {
+
+    if (substr($link, 0, strlen(TIKTOK1_PREFIX)) == TIKTOK1_PREFIX) {
+	$options  = array('http' => array('user_agent' => "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/70.0.3538.77 Safari/537.36\r\n"));
+	$context  = stream_context_create($options);
+	$text = file_get_contents($link, false, $context);
+
+	if ($text == "") {
+	    show_error($video_width, $video_height);
+	    exit;
+	}
+
+	$dom = new DomDocument();
+	$dom->loadHTML($text);
+	$elements = $dom->getElementsByTagName('link');
+
+	$link = "";
+
+	if (!is_null($elements)) {
+	    foreach ($elements as $element) {
+		if ($element->getAttribute('rel') == 'canonical') {
+		    $link = $element->getAttribute('href');
+		    break;
+		}
+	    }
+	}
+
+	if ($link == "") {
+	    show_error($video_width, $video_height);
+	    exit;
+	}
+    }
+
     $options  = array('http' => array('user_agent' => "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/70.0.3538.77 Safari/537.36\r\n"));
     $context  = stream_context_create($options);
     $text = file_get_contents($link, false, $context);
