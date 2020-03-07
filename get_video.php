@@ -66,11 +66,12 @@ function get_source($hash, $type, $width, $height)
 	$size = "$size height=\"$height\"";
     }
 
-    echo '<html><body style="margin: 0; border: 0">';
+    echo '<html><body style="margin: 0; border: 0; position: relative; overflow: hidden">';
 
     if ($type == "video/mp4") {
 //	echo '<video class="videocache" '.$size.' poster="'.$SERVER_URL.'/testcard.png" controls><source src="'.$SERVER_URL.'/'.$CACHE_DIR.'/'.$hash.'.mp4" type="'.$type.'"></video>';
 	echo '<video class="videocache" '.$size.' title="'.$link.'" controls><source src="'.$SERVER_URL.'/'.$CACHE_DIR.'/'.$hash.'.mp4" type="'.$type.'"></video>';
+	echo '<a style="position: absolute; top: 0; left: 0; z-index: 1; font-size: smaller;" target="_blank" href="'.$link.'">'.$link.'</a>';
     } else {
 	echo '<video class="videocache" '.$size.' title="'.$link.'" controls><source src="'.$SERVER_URL.'/novideo.mp4" type="video/mp4"></video>';
     }
